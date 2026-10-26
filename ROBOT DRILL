@@ -1,0 +1,159 @@
+using System;
+using System.Collections.Generic;
+
+
+public interface IBattery
+{
+    int RemainingEnergy { get; }
+    void Consume(int amount);
+    void Recharge(int amount);
+}
+
+
+public class LithiumBattery : IBattery
+{
+    private int _remainingEnergy;
+    public LithiumBattery()
+    {
+        _remainingEnergy = 100;
+    }
+    public int RemainingEnergy
+    {
+        get { return _remainingEnergy; }
+    }
+
+    public void Consume(int amount)
+    {
+        if (amount < 0) return;
+        _remainingEnergy -= amount;
+        if (_remainingEnergy < 0) _remainingEnergy = 0;       
+    }
+
+    public void Recharge(int amount)
+    {
+        if (amount < 0) return;
+        _remainingEnergy += amount;
+        if (_remainingEnergy > 100) _remainingEnergy = 100;   
+    }
+}
+
+
+public class SolarBattery : IBattery
+{
+    private int _remainingEnergy;
+
+    public SolarBattery()
+    {
+        _remainingEnergy = 100;
+    }
+
+    public int RemainingEnergy
+    {
+        get { return _remainingEnergy; }
+    }
+
+    public void Consume(int amount)
+    {
+        if (amount < 0) return;
+        _remainingEnergy -= amount;
+        if (_remainingEnergy < 0) _remainingEnergy = 0;
+    }
+
+    public void Recharge(int amount)
+    {
+        if (amount < 0) return;
+        _remainingEnergy += amount;
+        if (_remainingEnergy > 100) _remainingEnergy = 100;
+    }
+}
+
+
+public abstract class Robot
+{
+    private IBattery _battery;
+
+    public string Name { get; }
+    public int RemainingEnergy
+    {
+        get { return _battery.RemainingEnergy; }
+    }
+
+    protected Robot(string name, IBattery battery)
+    {
+        Name = name;
+        _battery = battery;
+    }
+
+    public void Recharge(int amount)
+    {
+        _battery.Recharge(amount);  
+    }
+
+    protected void UseEnergy(int amount)
+    {
+        _battery.Consume(amount);   
+    }
+    public abstract void PerformTask();
+}
+
+
+
+public class CleaningRobot : Robot
+{
+    public CleaningRobot(string name, IBattery battery) : base(name, battery) { }
+    public override void PerformTask()
+    {
+        Console.WriteLine($"{Name} is cleaning the floor...");
+        UseEnergy(10);
+        Console.WriteLine($"  Energy left: {RemainingEnergy}");
+    }
+}
+
+
+public class DeliveryRobot : Robot
+{
+    public DeliveryRobot(string name, IBattery battery) : base(name, battery) { }
+
+    public override void PerformTask()
+    {
+        Console.WriteLine($"{Name} is delivering a package...");
+        UseEnergy(25);
+        Console.WriteLine($"  Energy left: {RemainingEnergy}");
+    }
+}
+
+
+public class Program
+{
+    public static void Main(string[] args)
+    {
+        CleaningRobot cleaner = new CleaningRobot("CleanBot", new LithiumBattery());
+        DeliveryRobot courier = new DeliveryRobot("DeliverBot", new SolarBattery());
+
+        Console.WriteLine("=== Demonstrate PerformTask() and Recharge() ===");
+        cleaner.PerformTask();
+        courier.PerformTask();
+
+        Console.WriteLine("\nRecharging DeliverBot by 10...");
+        courier.Recharge(10);
+        Console.WriteLine($"  {courier.Name} energy: {courier.RemainingEnergy}");
+
+        Console.WriteLine("\nRecharging CleanBot by 50 (max is 100)...");
+        cleaner.Recharge(50);
+        Console.WriteLine($"  {cleaner.Name} energy: {cleaner.RemainingEnergy}");
+
+        Console.WriteLine("\n=== Polymorphism with List<Robot> ===");
+        List<Robot> robots = new List<Robot> { cleaner, courier };
+
+        foreach (Robot robot in robots)
+        {
+            robot.PerformTask();  
+        }
+
+        Console.WriteLine("\n=== Final Energy ===");
+        foreach (Robot robot in robots)
+        {
+            Console.WriteLine($"{robot.Name}: {robot.RemainingEnergy}");
+        }
+    }
+}
